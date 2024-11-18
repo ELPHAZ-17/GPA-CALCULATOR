@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Grade System Cal. GPA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #45a049;
+        }
+        
+        h1 {
+            font-size: 2em;
+            color: #333;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1em;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .subjects input {
+            width: calc(100% - 20px);
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .grade-display table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .grade-display th,
+        .grade-display td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .grade-display th {
+            background-color: #f4f4f4;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .delete-btn:hover {
+            background-color: #e53935;
+        }
+        
+        @media screen and (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            input[type="text"],
+            input[type="number"],
+            button {
+                padding: 8px;
+                font-size: 1em;
+            }
+            .subjects input {
+                width: calc(100% - 20px);
+                margin-bottom: 8px;
+            }
+            .grade-display table {
+                font-size: 12px;
+                width: 100%;
+                overflow-x: auto;
+            }
+            .grade-display th,
+            .grade-display td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .delete-btn {
+                padding: 5px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Grade System Cal. GPA</h1>
+        </header>
+        <main>
+            <form id="gradeForm">
+                <div class="input-group">
+                    <label for="studentName">Student Name</label>
+                    <input type="text" id="studentName" placeholder="Enter student name" required>
+                </div>
+                <div class="subjects">
+                    <label>Enter Grades for 7 Subjects:</label>
+                    <input type="number" class="subjectGrade" placeholder="Math (3 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="Emerging (3 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="English (3 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="Programming (3 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="Inclusiveness (2 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="Anthropology (2 credit hours)" required min="0" max="100">
+                    <input type="number" class="subjectGrade" placeholder="Civics (2 credit hours)" required min="0" max="100">
+                </div>
+                <button type="submit">Calculate GPA</button>
+            </form>
+
+            <div class="grade-display">
+                <h2>Grade List</h2>
+                <table id="gradeTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th> Grades</th>
+                            <th> by Letter </th>
+                            <th>Average</th>
+                            <th>GPA</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('gradeForm');
+        const gradeTableBody = document.querySelector('#gradeTable tbody');
+        let students = [];
+
+        // Credit hours for each subject
+        const creditHours = {
+            Math: 3,
+            Emerging: 3,
+            English: 3,
+            Programming: 3,
+            Inclusiveness: 2,
+            Anthropology: 2,
+            Civics: 2
+        };
+
+        // Add student and grades
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const studentName = document.getElementById('studentName').value.trim();
+            const subjectInputs = document.querySelectorAll('.subjectGrade');
+            const grades = Array.from(subjectInputs).map(input => parseInt(input.value));
+
+            // Validate input
+            if (studentName === '' || grades.some(grade => isNaN(grade) || grade < 0 || grade > 100)) {
+                alert('Please enter valid name and grades (0-100).');
+                return;
+            }
+
+            // Calculate average, GPA, and letter grades
+            const average = calculateAverage(grades);
+            const gpa = calculateGPA(grades);
+            const letterGrades = grades.map(gradeToLetter); // Convert each grade to a letter
+
+            students.push({
+                name: studentName,
+                grades,
+                letterGrades,
+                average,
+                gpa
+            });
+            updateTable();
+            form.reset();
+        });
+
+        // Update the table with student data
+        function updateTable() {
+            gradeTableBody.innerHTML = '';
+
+            students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td>${student.grades.join(', ')}</td>
+                    <td>${student.letterGrades.join(', ')}</td>
+                    <td>${student.average.toFixed(2)}</td>
+                    <td>${student.gpa.toFixed(2)}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteStudent(${index})">Delete</button>
+                    </td>
+                `;
+                gradeTableBody.appendChild(row);
+            });
+        }
+
+        // Calculate average of grades
+        function calculateAverage(grades) {
+            const total = grades.reduce((sum, grade) => sum + grade, 0);
+            return total / grades.length;
+        }
+
+        // Calculate GPA based on all subjects (Math, Emerging, English, Programming, Inclusiveness, Anthropology, Civics)
+        function calculateGPA(grades) {
+            let weightedSum = 0;
+            let totalCredits = 0;
+
+            // Subjects and their corresponding credit hours
+            const subjects = [{
+                name: 'Math',
+                credit: creditHours.Math
+            }, {
+                name: 'Emerging',
+                credit: creditHours.Emerging
+            }, {
+                name: 'English',
+                credit: creditHours.English
+            }, {
+                name: 'Programming',
+                credit: creditHours.Programming
+            }, {
+                name: 'Inclusiveness',
+                credit: creditHours.Inclusiveness
+            }, {
+                name: 'Anthropology',
+                credit: creditHours.Anthropology
+            }, {
+                name: 'Civics',
+                credit: creditHours.Civics
+            }];
+
+            // Calculate weighted GPA
+            grades.forEach((grade, index) => {
+                weightedSum += gradeToGPA(grade) * subjects[index].credit;
+                totalCredits += subjects[index].credit;
+            });
+
+            return weightedSum / totalCredits;
+        }
+
+        // Convert grade to letter grade
+        function gradeToLetter(grade) {
+            if (grade < 50) return 'F';
+            if (grade >= 50 && grade <= 54) return 'C-';
+            if (grade >= 55 && grade <= 59) return 'C';
+            if (grade >= 60 && grade <= 64) return 'C+';
+            if (grade >= 65 && grade <= 69) return 'B-';
+            if (grade >= 70 && grade <= 74) return 'B';
+            if (grade >= 75 && grade <= 79) return 'B+';
+            if (grade >= 80 && grade <= 84) return 'A-';
+            if (grade >= 85) return 'A';
+        }
+
+        // Convert grade to GPA
+        function gradeToGPA(grade) {
+            if (grade < 50) return 0;
+            if (grade >= 50 && grade <= 54) return 1.75;
+            if (grade >= 55 && grade <= 59) return 2;
+            if (grade >= 60 && grade <= 64) return 2.5;
+            if (grade >= 65 && grade <= 69) return 2.75;
+            if (grade >= 70 && grade <= 74) return 3;
+            if (grade >= 75 && grade <= 79) return 3.5;
+            if (grade >= 80 && grade <= 84) return 3.75;
+            if (grade >= 85) return 4;
+        }
+
+        // Delete a student
+        function deleteStudent(index) {
+            students.splice(index, 1);
+            updateTable();
+        }
+    </script>
+</body>
+
+</html>
